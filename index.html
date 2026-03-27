@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NNEZ2427 2周目 — Minecraft 原版生存服务器</title>
+  <meta name="description" content="NNEZ2427 2周目，纯公益、零氪金的Minecraft原版生存服务器。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link preload as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet"></noscript>
+
+  <style>
+    :root {
+      --accent: #55FF55;
+      --accent-dim: #2ecc40;
+      --accent-glow: rgba(85, 255, 85, 0.25);
+      --bg: #0a0a1a;
+      --bg-card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #f0f0f0;
+      --text-dim: rgba(255,255,255,0.45);
+      --text-mid: rgba(255,255,255,0.7);
+      --radius: 16px;
+      --ease: cubic-bezier(0.65, 0.05, 0, 1);
+      --dur: 0.8s;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; overflow-x: hidden; cursor: none; }
+    body {
+      font-family: 'Noto Sans SC', 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+    a { color: inherit; text-decoration: none; cursor: none; }
+    ::selection { background: var(--accent); color: #000; }
+    img { display: block; max-width: 100%; }
+
+    /* ===== Minecraft Background Scene ===== */
+    #mc-bg {
+      position: fixed; inset: 0; z-index: 0;
+      width: 100vw; height: 100vh;
+    }
+
+    /* Floating block decorations (CSS) */
+    .mc-block {
+      position: fixed;
+      width: 40px; height: 40px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 0;
+      image-rendering: pixelated;
+      opacity: 0;
+      animation: floatBlock 20s linear infinite;
+    }
+    @keyframes floatBlock {
+      0% { opacity: 0; transform: translateY(100vh) rotate(0deg); }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { opacity: 0; transform: translateY(-100px) rotate(360deg); }
+    }
+
+    /* ===== Custom Cursor ===== */
+    .cursor {
+      position: fixed; width: 20px; height: 20px;
+      border: 2px solid var(--accent); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s, height 0.2s, background 0.2s, border-color 0.2s;
+      mix-blend-mode: difference;
+    }
+    .cursor-dot {
+      position: fixed; width: 6px; height: 6px;
+      background: var(--accent); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%, -50%);
+    }
+    .cursor-hover {
+      width: 50px !important; height: 50px !important;
+      background: rgba(85,255,85,0.2) !important;
+      border-color: transparent !important;
+    }
+
+    .mouse-glow {
+      position: fixed; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(85,255,85,0.06) 0%, transparent 70%);
+      border-radius: 50%; pointer-events: none; z-index: 1;
+      transform: translate(-50%, -50%); transition: opacity 0.3s;
+    }
+
+    /* GPU compositing hints */
+    .glass-card, .nav, .marquee-wrap, footer, .btn-fill, .btn-outline, .nav-cta, .btn-glass {
+      will-change: auto;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+    }
+
+    /* ===== Navbar — Liquid Glass ===== */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 72px; padding: 0 clamp(1.5rem, 4vw, 3rem);
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(10,10,26,0.4);
+      -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.08) contrast(1.05);
+      backdrop-filter: blur(20px) saturate(180%) brightness(1.08) contrast(1.05);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 1px 0 0 rgba(255,255,255,0.06) inset, 0 -1px 0 0 rgba(0,0,0,0.15) inset;
+      transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+    .nav.scrolled {
+      background: rgba(10,10,26,0.65);
+      border-bottom-color: rgba(255,255,255,0.1);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em;
+      color: #fff; cursor: none;
+    }
+    .nav-links { display: flex; align-items: center; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--text-dim); font-size: 0.85rem; font-weight: 500;
+      letter-spacing: 0.02em; transition: color 0.3s; position: relative; cursor: none;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 1.5px; background: var(--accent);
+      transition: width 0.3s var(--ease);
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-links a:hover::after { width: 100%; }
+
+    /* ===== Liquid Glass Button ===== */
+    .nav-cta, .btn-glass {
+      background: rgba(255,255,255,0.1) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(160%) brightness(1.1);
+      backdrop-filter: blur(16px) saturate(160%) brightness(1.1);
+      border: 1px solid rgba(255,255,255,0.15) !important;
+      color: #fff !important;
+      padding: 10px 24px; border-radius: 100px;
+      font-weight: 700 !important; font-size: 0.82rem !important;
+      letter-spacing: 0.04em !important;
+      transition: transform 0.3s var(--ease), box-shadow 0.3s, background 0.3s !important;
+      cursor: none; box-shadow: 0 2px 12px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.08) inset;
+      position: relative; overflow: hidden;
+    }
+    .nav-cta::before, .btn-glass::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+      border-radius: 100px 100px 0 0; pointer-events: none;
+    }
+    .nav-cta::after { display: none !important; }
+    .nav-cta:hover, .btn-glass:hover {
+      transform: scale(1.05);
+      background: rgba(255,255,255,0.16) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 30px rgba(85,255,85,0.1), 0 0 0 0.5px rgba(255,255,255,0.12) inset;
+      opacity: 1 !important; color: #fff !important;
+    }
+
+    .mobile-btn {
+      display: none; background: none; border: none; cursor: pointer;
+      width: 28px; height: 20px; position: relative;
+    }
+    .mobile-btn span {
+      display: block; width: 100%; height: 1.5px;
+      background: #fff; position: absolute; left: 0;
+      transition: 0.3s var(--ease);
+    }
+    .mobile-btn span:nth-child(1) { top: 0; }
+    .mobile-btn span:nth-child(2) { top: 50%; transform: translateY(-50%); }
+    .mobile-btn span:nth-child(3) { bottom: 0; }
+
+    /* ===== Hero ===== */
+    .hero {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 120px clamp(1.5rem, 4vw, 3rem) 80px;
+      overflow: hidden; z-index: 2;
+    }
+    .hero-content {
+      position: relative; z-index: 3;
+      text-align: center; max-width: 900px;
+      transition: transform 0.1s ease-out;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 2rem;
+      opacity: 0; animation: fadeUp 0.8s var(--ease) 0.2s forwards;
+    }
+    .hero-eyebrow .dot {
+      width: 6px; height: 6px; background: var(--accent);
+      border-radius: 50%; animation: pulse 2s ease infinite;
+    }
+    .hero h1 {
+      font-size: clamp(3.5rem, 10vw, 8rem);
+      font-weight: 900; line-height: 0.9;
+      letter-spacing: -0.04em; margin-bottom: 1.5rem;
+      opacity: 0; animation: fadeUp 0.8s var(--ease) 0.3s forwards;
+      text-shadow: 0 0 60px rgba(85,255,85,0.15), 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .hero h1 .grad {
+      background: linear-gradient(135deg, #55FF55 0%, #00FFAA 40%, #55FF88 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-mid); max-width: 550px;
+      margin: 0 auto 3rem; font-weight: 400;
+      opacity: 0; animation: fadeUp 0.8s var(--ease) 0.4s forwards;
+    }
+    .hero-actions {
+      display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.8s var(--ease) 0.5s forwards;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 16px 36px; border-radius: 100px;
+      font-weight: 700; font-size: 0.9rem;
+      letter-spacing: 0.02em; border: none;
+      cursor: none; transition: all 0.4s var(--ease);
+      position: relative; overflow: hidden;
+    }
+    .btn-fill {
+      background: rgba(85,255,85,0.18);
+      -webkit-backdrop-filter: blur(20px) saturate(200%) brightness(1.15) contrast(1.08);
+      backdrop-filter: blur(20px) saturate(200%) brightness(1.15) contrast(1.08);
+      color: var(--accent);
+      border: 1px solid rgba(85,255,85,0.25);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.25), 0 0 50px rgba(85,255,85,0.08), 0 0 0 0.5px rgba(255,255,255,0.08) inset;
+    }
+    .btn-fill::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%);
+      border-radius: 100px 100px 0 0; pointer-events: none;
+    }
+    .btn-fill:hover {
+      box-shadow: 0 8px 40px rgba(85,255,85,0.2), 0 0 80px rgba(85,255,85,0.12), 0 0 0 0.5px rgba(255,255,255,0.12) inset;
+      transform: translateY(-2px); background: rgba(85,255,85,0.25);
+    }
+    .btn-outline {
+      background: rgba(255,255,255,0.08);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      backdrop-filter: blur(16px) saturate(160%);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(255,255,255,0.08) inset;
+    }
+    .btn-outline::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%);
+      border-radius: 100px 100px 0 0; pointer-events: none;
+    }
+    .btn-outline:hover {
+      border-color: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.12);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.12) inset;
+    }
+
+    .hero-meta {
+      display: flex; gap: 3rem; justify-content: center;
+      margin-top: 4rem; padding-top: 2.5rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      opacity: 0; animation: fadeUp 0.8s var(--ease) 0.6s forwards;
+    }
+    .meta-item { text-align: center; }
+    .meta-val {
+      font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em;
+      color: #fff; line-height: 1;
+      text-shadow: 0 0 20px rgba(85,255,85,0.2);
+    }
+    .meta-label {
+      font-size: 0.7rem; color: var(--text-dim); margin-top: 6px;
+      letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500;
+    }
+
+    /* ===== Marquee ===== */
+    .marquee-wrap {
+      padding: 2rem 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden; position: relative; z-index: 2;
+      background: rgba(0,0,0,0.2);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      contain: layout style paint;
+    }
+    .marquee-track {
+      display: flex; gap: 3rem;
+      animation: marquee 25s linear infinite;
+      width: max-content;
+    }
+    .marquee-item {
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 800; letter-spacing: -0.02em;
+      color: rgba(255,255,255,0.06);
+      white-space: nowrap; text-transform: uppercase;
+      display: flex; align-items: center; gap: 3rem;
+    }
+    .marquee-item .sep {
+      width: 6px; height: 6px; background: var(--accent);
+      border-radius: 50%; opacity: 0.3; flex-shrink: 0;
+    }
+
+    /* ===== Section Shared ===== */
+    .sec { position: relative; z-index: 2; padding: clamp(4rem, 10vw, 8rem) clamp(1.5rem, 4vw, 3rem); contain: layout style paint; }
+    .sec-head { max-width: 650px; margin-bottom: clamp(3rem, 6vw, 5rem); }
+    .sec-tag {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sec-tag::before { content: ''; width: 24px; height: 1.5px; background: var(--accent); }
+    .sec-title {
+      font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900;
+      letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1rem;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+    }
+    .sec-desc { color: var(--text-dim); font-size: 1rem; max-width: 500px; }
+
+    /* ===== Liquid Glass Cards (CSS-only, no SVG filter) ===== */
+    .glass-card {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.06);
+      backdrop-filter: blur(20px) saturate(180%) brightness(1.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.3),
+        0 1px 0 0 rgba(255,255,255,0.06) inset,
+        0 -1px 0 0 rgba(0,0,0,0.12) inset;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s ease-out;
+    }
+    /* Top highlight — glass refraction shimmer */
+    .glass-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(180deg,
+        rgba(255,255,255,0.12) 0%,
+        rgba(255,255,255,0.03) 40%,
+        transparent 100%);
+      border-radius: var(--radius) var(--radius) 0 0;
+      pointer-events: none; z-index: 1;
+    }
+    /* Edge glow rim */
+    .glass-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: var(--radius);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 0 20px rgba(255,255,255,0.02) inset;
+      pointer-events: none; z-index: 1;
+    }
+
+    /* ===== Servers Grid ===== */
+    .servers-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    }
+    .srv-card {
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      display: flex; flex-direction: column; gap: 1rem;
+      transform-style: preserve-3d; perspective: 1000px;
+    }
+    .srv-card .glass-inner { position: relative; z-index: 2; }
+    .srv-icon { font-size: 2rem; transform: translateZ(20px); }
+    .srv-name {
+      font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em;
+      transform: translateZ(15px);
+    }
+    .srv-addr {
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 0.85rem; font-weight: 600;
+      color: var(--accent); background: rgba(85,255,85,0.1);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(85,255,85,0.15);
+      padding: 8px 14px; border-radius: 8px;
+      cursor: none; display: inline-block;
+      transition: background 0.2s, border-color 0.2s;
+      width: fit-content; transform: translateZ(10px);
+      position: relative; overflow: hidden;
+    }
+    .srv-addr::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+      border-radius: 8px 8px 0 0; pointer-events: none;
+    }
+    .srv-addr:hover { background: rgba(85,255,85,0.18); border-color: rgba(85,255,85,0.25); }
+    .srv-desc { color: var(--text-dim); font-size: 0.82rem; line-height: 1.5; transform: translateZ(5px); }
+
+    /* ===== Features ===== */
+    .feat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    }
+    .feat-card {
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      transform-style: preserve-3d; perspective: 1000px;
+    }
+    .feat-card .glass-inner { position: relative; z-index: 2; }
+    .feat-icon {
+      font-size: 1.5rem; margin-bottom: 1rem;
+      width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+      background: rgba(85,255,85,0.1);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(85,255,85,0.12);
+      border-radius: 12px; transform: translateZ(20px);
+    }
+    .feat-card h3 {
+      font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;
+      letter-spacing: -0.01em; transform: translateZ(15px);
+    }
+    .feat-card p { color: var(--text-dim); font-size: 0.85rem; line-height: 1.6; transform: translateZ(10px); }
+
+    /* ===== Rules ===== */
+    .rules-list {
+      max-width: 860px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .rule-card {
+      padding: 1.5rem 1.8rem;
+      display: flex; align-items: flex-start; gap: 1.5rem;
+      transition: padding-left 0.3s var(--ease);
+    }
+    .rule-card:hover { padding-left: 8px; }
+    .rule-num {
+      flex-shrink: 0; font-size: 0.75rem; font-weight: 800;
+      color: var(--accent); letter-spacing: 0.05em; padding-top: 2px;
+    }
+    .rule-body h4 {
+      font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem;
+      letter-spacing: -0.01em;
+    }
+    .rule-body p { color: var(--text-dim); font-size: 0.82rem; line-height: 1.6; }
+
+    /* ===== CTA ===== */
+    .cta-sec { text-align: center; }
+    .cta-box {
+      max-width: 720px; margin: 0 auto;
+      padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 4vw, 3rem);
+      transform-style: preserve-3d; perspective: 1000px;
+    }
+    .cta-box h2 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900;
+      letter-spacing: -0.03em; margin-bottom: 1rem; transform: translateZ(15px);
+      text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+    .cta-box p {
+      color: var(--text-mid); margin-bottom: 2rem; font-size: 1rem;
+      max-width: 480px; margin-left: auto; margin-right: auto;
+      transform: translateZ(10px);
+    }
+    .cta-box .actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .cta-qq {
+      margin-top: 2rem; font-size: 0.78rem; color: var(--text-dim);
+      letter-spacing: 0.06em;
+    }
+    .cta-qq strong { color: #fff; font-weight: 600; }
+
+    /* ===== Footer ===== */
+    footer {
+      position: relative; z-index: 2;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 3rem clamp(1.5rem, 4vw, 3rem) 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+      background: rgba(0,0,0,0.3);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      contain: layout style;
+    }
+    .foot-brand { font-weight: 700; font-size: 0.9rem; letter-spacing: -0.01em; }
+    .foot-right { color: var(--text-dim); font-size: 0.75rem; letter-spacing: 0.04em; }
+
+    /* ===== Animations ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.6); }
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+    }
+    .reveal.vis { opacity: 1; transform: translateY(0); }
+
+    /* ===== Server Status ===== */
+    .status-bar {
+      display: flex; gap: 16px; justify-content: center;
+      flex-wrap: wrap; margin-top: 2rem;
+      position: relative; z-index: 3;
+    }
+    .status-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 20px;
+      font-size: 0.85rem; font-weight: 600;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      flex-shrink: 0; position: relative;
+    }
+    .status-dot.online {
+      background: #50C878;
+      box-shadow: 0 0 10px rgba(80,200,120,0.6);
+      animation: statusPulse 2s ease infinite;
+    }
+    .status-dot.offline {
+      background: #ff4444;
+      box-shadow: 0 0 10px rgba(255,68,68,0.4);
+    }
+    .status-dot.loading {
+      background: #888;
+      animation: statusBlink 1s ease infinite;
+    }
+    @keyframes statusPulse {
+      0%, 100% { box-shadow: 0 0 6px rgba(80,200,120,0.4); }
+      50% { box-shadow: 0 0 16px rgba(80,200,120,0.8); }
+    }
+    @keyframes statusBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .status-players {
+      color: var(--accent); font-weight: 700;
+    }
+    .status-label {
+      color: var(--text-dim); font-weight: 400;
+    }
+    .status-version {
+      color: var(--text-dim); font-size: 0.75rem;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px) {
+      .servers-grid, .feat-grid { grid-template-columns: 1fr; }
+      .hero-meta { gap: 2rem; flex-wrap: wrap; }
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex; flex-direction: column;
+        position: absolute; top: 72px; left: 0; right: 0;
+        background: rgba(10,10,26,0.85);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        backdrop-filter: blur(24px) saturate(180%);
+        padding: 2rem; gap: 1.2rem;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      .mobile-btn { display: block; }
+      .cursor, .cursor-dot, .mouse-glow { display: none; }
+      html { cursor: auto; }
+      body { cursor: auto; }
+      a, .btn, .srv-addr, .nav-links a, .nav-cta, .nav-brand { cursor: pointer; }
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: clamp(2.5rem, 14vw, 4rem); }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Minecraft Background Canvas -->
+  <canvas id="mc-bg"></canvas>
+
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-dot" id="cursor-dot"></div>
+  <div class="mouse-glow" id="mouse-glow"></div>
+
+  <!-- Nav -->
+  <nav class="nav" id="nav">
+    <a href="#" class="nav-brand">𝖭𝖭𝖤𝖹𝟤𝟦𝟤𝟩</a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#servers">服务器</a></li>
+      <li><a href="#features">特色</a></li>
+      <li><a href="#rules">守则</a></li>
+      <li><a href="https://qm.qq.com/q/Jrc28jgws8" target="_blank" class="nav-cta">𝙅𝙤𝙞𝙣 𝙐𝙨</a></li>
+    </ul>
+    <button class="mobile-btn" id="mobile-btn" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content" id="hero-content">
+      <div class="hero-eyebrow">
+        <span class="dot"></span>
+        𝚂𝚎𝚊𝚜𝚘𝚗 𝟸 · 原版生存 · 纯公益 · 服务器运行中
+      </div>
+      <h1>
+        <span class="grad">NNEZ2427</span><br>2周目
+      </h1>
+      <p class="hero-sub">
+        纯净原版，零氪金。以友谊为基石，打造最纯粹的 Minecraft 生存社区。
+      </p>
+      <div class="hero-actions">
+        <a href="https://qm.qq.com/q/Jrc28jgws8" target="_blank" class="btn btn-fill">𝙅𝙤𝙞𝙣 𝙐𝙨 →</a>
+        <a href="#features" class="btn btn-outline">探索更多</a>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-item"><div class="meta-val">原版</div><div class="meta-label">纯净生存</div></div>
+        <div class="meta-item"><div class="meta-val">困难</div><div class="meta-label">硬核挑战</div></div>
+        <div class="meta-item"><div class="meta-val">免费</div><div class="meta-label">纯公益服</div></div>
+        <div class="meta-item"><div class="meta-val">不掉落</div><div class="meta-label">死亡保护</div></div>
+      </div>
+      <!-- Server Status -->
+      <div class="status-bar" id="server-status">
+        <div class="status-item glass-card" id="status-survival">
+          <div class="status-dot loading" id="dot-survival"></div>
+          <div>
+            <div><span class="status-label">生存服 </span><span class="status-players" id="players-survival">--</span></div>
+            <div class="status-version" id="ver-survival">检测中...</div>
+          </div>
+        </div>
+        <div class="status-item glass-card" id="status-bedwars">
+          <div class="status-dot loading" id="dot-bedwars"></div>
+          <div>
+            <div><span class="status-label">起床战争 </span><span class="status-players" id="players-bedwars">--</span></div>
+            <div class="status-version" id="ver-bedwars">检测中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <span class="marquee-item">纯净原版 <span class="sep"></span> 困难模式 <span class="sep"></span> 生电友好 <span class="sep"></span> 零氪金 <span class="sep"></span> 友谊至上 <span class="sep"></span> 聚落生态 <span class="sep"></span> 死亡不掉落 <span class="sep"></span> 持续更新</span>
+      <span class="marquee-item">纯净原版 <span class="sep"></span> 困难模式 <span class="sep"></span> 生电友好 <span class="sep"></span> 零氪金 <span class="sep"></span> 友谊至上 <span class="sep"></span> 聚落生态 <span class="sep"></span> 死亡不掉落 <span class="sep"></span> 持续更新</span>
+    </div>
+  </div>
+
+  <!-- Servers -->
+  <section class="sec" id="servers">
+    <div class="sec-head reveal">
+      <div class="sec-tag">服务器地址</div>
+      <h2 class="sec-title">选择你的战场</h2>
+      <p class="sec-desc">点击地址即可复制</p>
+    </div>
+    <div class="servers-grid reveal">
+      <div class="srv-card glass-card">
+        <div class="glass-inner">
+          <div class="srv-icon">🏕️</div>
+          <div class="srv-name">生存服</div>
+          <div class="srv-addr" title="点击复制">110.42.33.89</div>
+          <div class="srv-desc">原版生存 · 困难模式 · 死亡不掉落 · 无传送</div>
+        </div>
+      </div>
+      <div class="srv-card glass-card">
+        <div class="glass-inner">
+          <div class="srv-icon">⚔️</div>
+          <div class="srv-name">起床战争</div>
+          <div class="srv-addr" title="点击复制">110.42.33.89:25566</div>
+          <div class="srv-desc">PVP 对战 · 团队竞技 · 策略对抗</div>
+        </div>
+      </div>
+      <div class="srv-card glass-card">
+        <div class="glass-inner">
+          <div class="srv-icon">📦</div>
+          <div class="srv-name">服务器网盘</div>
+          <div class="srv-addr" title="点击复制">110.42.111.49:2427</div>
+          <div class="srv-desc">资源下载 · 地图存档 · MOD 分享</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="sec" id="features">
+    <div class="sec-head reveal">
+      <div class="sec-tag">服务器特色</div>
+      <h2 class="sec-title">为什么选择这里</h2>
+      <p class="sec-desc">坚持原版玩法，打造最纯粹的联机体验</p>
+    </div>
+    <div class="feat-grid reveal">
+      <div class="feat-card glass-card"><div class="glass-inner">
+        <div class="feat-icon">🎪</div><h3>多元社区</h3>
+        <p>从建筑大师到红石狂魔，从探险家到 PVP 战神，每个人都能找到志同道合的伙伴。</p>
+      </div></div>
+      <div class="feat-card glass-card"><div class="glass-inner">
+        <div class="feat-icon">⛏️</div><h3>硬核原版</h3>
+        <p>多生存服、全面困难难度、死亡不掉落。回归最纯粹的沙盒乐趣。</p>
+      </div></div>
+      <div class="feat-card glass-card"><div class="glass-inner">
+        <div class="feat-icon">⚡</div><h3>生电友好</h3>
+        <p>支持绝大多数生电特性，允许自动农场、刷铁机等红石机械玩法。大型装置提前报备即可。</p>
+      </div></div>
+      <div class="feat-card glass-card"><div class="glass-inner">
+        <div class="feat-icon">🔧</div><h3>紧跟更新</h3>
+        <p>服务器版本紧跟 Minecraft 官方更新，第一时间体验最新内容与特性。</p>
+      </div></div>
+      <div class="feat-card glass-card"><div class="glass-inner">
+        <div class="feat-icon">🛡️</div><h3>零容忍外挂</h3>
+        <p>飞行挂、透视挂、自动挖矿、物品复制等一律禁止。永久封禁，不接受申诉。</p>
+      </div></div>
+      <div class="feat-card glass-card"><div class="glass-inner">
+        <div class="feat-icon">💚</div><h3>纯公益运营</h3>
+        <p>无需氪金，所有设施无偿提供。以友谊为基石，打造良心原版联机平台。</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- Rules -->
+  <section class="sec" id="rules">
+    <div class="sec-head reveal">
+      <div class="sec-tag">社区守则</div>
+      <h2 class="sec-title">基本原则</h2>
+      <p class="sec-desc">和谐共处，让每个人都能享受游戏</p>
+    </div>
+    <div class="rules-list reveal">
+      <div class="rule-card glass-card">
+        <div class="rule-num">01</div>
+        <div class="rule-body">
+          <h4>用人物，须明求；倘不问，即为偷</h4>
+          <p>使用他人物品、机器、农田前，必须明确请求同意。擅自使用等同于偷窃，一经举报将受处罚。公共区域资源可自由取用。</p>
+        </div>
+      </div>
+      <div class="rule-card glass-card">
+        <div class="rule-num">02</div>
+        <div class="rule-body">
+          <h4>禁止使用未授权第三方作弊软件</h4>
+          <p>飞行挂、透视挂、自动挖矿、快速破坏、物品复制等一律禁止。首次发现永久封禁，IP 可能同步封锁，不接受申诉。</p>
+        </div>
+      </div>
+      <div class="rule-card glass-card">
+        <div class="rule-num">03</div>
+        <div class="rule-body">
+          <h4>禁止扰乱公共秩序</h4>
+          <p>禁止在公共区域放生凋灵/末影龙、聊天栏刷屏、人身攻击、传播不良信息。</p>
+        </div>
+      </div>
+      <div class="rule-card glass-card">
+        <div class="rule-num">04</div>
+        <div class="rule-body">
+          <h4>禁止破坏 / 盗取他人财产</h4>
+          <p>故意拆毁他人建筑、偷取箱子物品、破坏农田/机械均属违规。误操作需主动道歉并赔偿。</p>
+        </div>
+      </div>
+      <div class="rule-card glass-card">
+        <div class="rule-num">05</div>
+        <div class="rule-body">
+          <h4>大型生电需报备</h4>
+          <p>高频红石、超大型实体农场等需提前向管理员报备，评估对服务器性能的影响。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee 2 -->
+  <div class="marquee-wrap">
+    <div class="marquee-track" style="animation-direction: reverse;">
+      <span class="marquee-item">挖矿出钻石 <span class="sep"></span> 建家不被拆 <span class="sep"></span> 红石不炸机 <span class="sep"></span> 友谊地久天长 <span class="sep"></span> 光阴易逝 <span class="sep"></span> 友谊长存</span>
+      <span class="marquee-item">挖矿出钻石 <span class="sep"></span> 建家不被拆 <span class="sep"></span> 红石不炸机 <span class="sep"></span> 友谊地久天长 <span class="sep"></span> 光阴易逝 <span class="sep"></span> 友谊长存</span>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <section class="sec cta-sec" id="join">
+    <div class="cta-box glass-card reveal">
+      <h2>准备好开始冒险了吗</h2>
+      <p>加入我们的社区，和志同道合的伙伴一起探索、建造、战斗。</p>
+      <div class="actions">
+        <a href="https://qm.qq.com/q/Jrc28jgws8" target="_blank" class="btn btn-fill">𝙅𝙤𝙞𝙣 𝙐𝙨 →</a>
+      </div>
+      <div class="cta-qq">𝙌𝙌群：<strong>902944189</strong> · 加群获取白名单</div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="foot-brand">𝖭𝖭𝖤𝖹𝟤𝟦𝟤𝟩</div>
+    <div class="foot-right">© 2026 NNEZ2427 · 光阴易逝，友谊长存</div>
+  </footer>
+
+  <script>
+    // ============================================================
+    //  Minecraft-themed Background — Canvas Animation
+    //  Sky gradient + stars + pixel MC block textures
+    // ============================================================
+    (function() {
+      const canvas = document.getElementById('mc-bg');
+      const ctx = canvas.getContext('2d');
+      let W, H;
+      let scrollY = 0;
+      let time = 0;
+
+      function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      window.addEventListener('scroll', () => { scrollY = window.scrollY; }, { passive: true });
+
+      // ---- Stars ----
+      const stars = [];
+      for (let i = 0; i < 120; i++) {
+        stars.push({
+          x: Math.random() * 2000 - 500,
+          y: Math.random() * 800,
+          size: Math.random() < 0.1 ? 2 : 1,
+          twinkle: Math.random() * Math.PI * 2,
+          speed: 0.3 + Math.random() * 0.7,
+          color: Math.random() < 0.3 ? '#aaffaa' : (Math.random() < 0.5 ? '#ffffaa' : '#ffffff')
+        });
+      }
+
+      // ---- Minecraft Block Texture Generator (16×16 pixel art) ----
+      function createBlockTexture(drawFn) {
+        const c = document.createElement('canvas');
+        c.width = 16; c.height = 16;
+        const t = c.getContext('2d');
+        drawFn(t);
+        return c;
+      }
+
+      // Helper: seeded random for deterministic textures
+      function seededRand(seed) {
+        let s = seed;
+        return function() { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; };
+      }
+
+      const blockTextures = [];
+
+      // 1. Grass Block
+      blockTextures.push(createBlockTexture(function(t) {
+        // Side: dirt with green top
+        t.fillStyle = '#8B6914'; t.fillRect(0, 0, 16, 16);
+        // Dirt variation
+        const r = seededRand(42);
+        for (let i = 0; i < 20; i++) {
+          t.fillStyle = r() > 0.5 ? '#7A5C10' : '#9B7420';
+          t.fillRect(Math.floor(r()*16), Math.floor(4+r()*12), 1, 1);
+        }
+        // Green top (3 rows)
+        t.fillStyle = '#5D9B37'; t.fillRect(0, 0, 16, 3);
+        t.fillStyle = '#4A8A2A'; t.fillRect(0, 3, 16, 1);
+        // Grass variation
+        for (let i = 0; i < 12; i++) {
+          t.fillStyle = r() > 0.5 ? '#6BAA42' : '#4E8E2E';
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*3), 1, 1);
+        }
+        // Shadow line
+        t.fillStyle = 'rgba(0,0,0,0.15)'; t.fillRect(0, 3, 16, 1);
+      }));
+
+      // 2. Diamond Ore
+      blockTextures.push(createBlockTexture(function(t) {
+        // Stone base
+        t.fillStyle = '#7F7F7F'; t.fillRect(0, 0, 16, 16);
+        const r = seededRand(99);
+        for (let i = 0; i < 30; i++) {
+          t.fillStyle = r() > 0.5 ? '#8A8A8A' : '#707070';
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*16), 1, 1);
+        }
+        // Diamond crystals (blue sparkles)
+        const diamonds = [[3,4],[7,3],[11,5],[2,10],[8,9],[13,11],[5,14],[10,13]];
+        diamonds.forEach(([dx,dy]) => {
+          t.fillStyle = '#4AEDD9'; t.fillRect(dx, dy, 2, 2);
+          t.fillStyle = '#7BF5E8'; t.fillRect(dx, dy, 1, 1);
+          t.fillStyle = '#2FC4B0'; t.fillRect(dx+1, dy+1, 1, 1);
+        });
+      }));
+
+      // 3. Gold Ore
+      blockTextures.push(createBlockTexture(function(t) {
+        t.fillStyle = '#7F7F7F'; t.fillRect(0, 0, 16, 16);
+        const r = seededRand(77);
+        for (let i = 0; i < 30; i++) {
+          t.fillStyle = r() > 0.5 ? '#8A8A8A' : '#707070';
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*16), 1, 1);
+        }
+        // Gold veins
+        const golds = [[2,3],[3,3],[4,4],[5,4],[3,5],[4,5],[9,2],[10,2],[10,3],[11,3],
+                       [4,10],[5,10],[5,11],[6,11],[12,9],[13,9],[13,10]];
+        golds.forEach(([gx,gy]) => {
+          t.fillStyle = '#FFD700'; t.fillRect(gx, gy, 1, 1);
+        });
+        t.fillStyle = '#FFEA00'; t.fillRect(3,3,1,1); t.fillRect(10,2,1,1);
+        t.fillStyle = '#C5A600'; t.fillRect(5,4,1,1); t.fillRect(11,3,1,1);
+      }));
+
+      // 4. Redstone Ore
+      blockTextures.push(createBlockTexture(function(t) {
+        t.fillStyle = '#7F7F7F'; t.fillRect(0, 0, 16, 16);
+        const r = seededRand(55);
+        for (let i = 0; i < 30; i++) {
+          t.fillStyle = r() > 0.5 ? '#8A8A8A' : '#707070';
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*16), 1, 1);
+        }
+        // Redstone crystals
+        const reds = [[2,2],[3,3],[7,5],[8,4],[12,2],[13,3],
+                      [1,11],[2,12],[3,11],[8,10],[9,11],[9,10],
+                      [14,8],[13,9],[14,9],[5,14],[6,13]];
+        reds.forEach(([rx,ry]) => {
+          t.fillStyle = '#FF0000'; t.fillRect(rx, ry, 1, 1);
+        });
+        t.fillStyle = '#FF4444'; t.fillRect(7,5,1,1); t.fillRect(9,10,1,1);
+        t.fillStyle = '#CC0000'; t.fillRect(3,3,1,1); t.fillRect(14,8,1,1);
+      }));
+
+      // 5. Emerald Ore
+      blockTextures.push(createBlockTexture(function(t) {
+        t.fillStyle = '#7F7F7F'; t.fillRect(0, 0, 16, 16);
+        const r = seededRand(33);
+        for (let i = 0; i < 30; i++) {
+          t.fillStyle = r() > 0.5 ? '#8A8A8A' : '#707070';
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*16), 1, 1);
+        }
+        // Emerald crystals
+        const ems = [[4,3],[5,3],[4,4],[5,4],[10,2],[11,2],[10,3],[11,3],
+                     [2,10],[3,10],[2,11],[3,11],[12,8],[13,8],[12,9],[13,9],
+                     [7,13],[8,13],[7,14],[8,14]];
+        ems.forEach(([ex,ey]) => {
+          t.fillStyle = '#50C878'; t.fillRect(ex, ey, 1, 1);
+        });
+        t.fillStyle = '#70E898'; t.fillRect(4,3,1,1); t.fillRect(10,2,1,1);
+        t.fillStyle = '#30A858'; t.fillRect(5,4,1,1); t.fillRect(13,9,1,1);
+      }));
+
+      // 6. Lapis Lazuli Ore
+      blockTextures.push(createBlockTexture(function(t) {
+        t.fillStyle = '#7F7F7F'; t.fillRect(0, 0, 16, 16);
+        const r = seededRand(88);
+        for (let i = 0; i < 30; i++) {
+          t.fillStyle = r() > 0.5 ? '#8A8A8A' : '#707070';
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*16), 1, 1);
+        }
+        // Lapis clusters
+        const laps = [[2,2],[3,2],[2,3],[3,3],[4,3],
+                      [9,4],[10,4],[11,4],[9,5],[10,5],
+                      [3,10],[4,10],[3,11],[4,11],
+                      [12,10],[13,10],[12,11],[13,11],
+                      [7,7],[8,7],[7,8]];
+        laps.forEach(([lx,ly]) => {
+          t.fillStyle = '#1E56D6'; t.fillRect(lx, ly, 1, 1);
+        });
+        t.fillStyle = '#2E76F6'; t.fillRect(2,2,1,1); t.fillRect(10,4,1,1);
+        t.fillStyle = '#1436A6'; t.fillRect(4,3,1,1); t.fillRect(13,11,1,1);
+      }));
+
+      // 7. Ancient Debris (Nether)
+      blockTextures.push(createBlockTexture(function(t) {
+        t.fillStyle = '#3D2C1E'; t.fillRect(0, 0, 16, 16);
+        const r = seededRand(66);
+        for (let i = 0; i < 25; i++) {
+          t.fillStyle = r() > 0.5 ? '#4A3728' : '#332218';
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*16), 1, 1);
+        }
+        // Spiral gold pattern
+        t.fillStyle = '#B8860B';
+        [[5,3],[6,3],[7,4],[7,5],[6,6],[5,6],[4,5],[4,4],
+         [10,8],[11,8],[12,9],[12,10],[11,11],[10,11],[9,10],[9,9]].forEach(([x,y]) => {
+          t.fillRect(x, y, 1, 1);
+        });
+        t.fillStyle = '#D4A017'; t.fillRect(5,3,1,1); t.fillRect(11,8,1,1);
+      }));
+
+      // 8. Enchanting Table (purple)
+      blockTextures.push(createBlockTexture(function(t) {
+        t.fillStyle = '#2A1A2A'; t.fillRect(0, 0, 16, 16);
+        const r = seededRand(11);
+        for (let i = 0; i < 20; i++) {
+          t.fillStyle = r() > 0.5 ? '#3A2A3A' : '#1E101E';
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*16), 1, 1);
+        }
+        // Enchantment glyphs (gold)
+        t.fillStyle = '#DAA520';
+        [[3,3],[4,2],[5,3],[4,4], [10,3],[11,2],[12,3],[11,4],
+         [3,11],[4,10],[5,11],[4,12], [10,11],[11,10],[12,11],[11,12],
+         [7,7],[8,6],[9,7],[8,8]].forEach(([x,y]) => {
+          t.fillRect(x, y, 1, 1);
+        });
+        // Center rune
+        t.fillStyle = '#FFD700'; t.fillRect(7,7,2,2);
+      }));
+
+      // 9. Netherite Block
+      blockTextures.push(createBlockTexture(function(t) {
+        t.fillStyle = '#2C2C2C'; t.fillRect(0, 0, 16, 16);
+        const r = seededRand(44);
+        for (let i = 0; i < 40; i++) {
+          const v = Math.floor(r() * 30 + 30);
+          t.fillStyle = `rgb(${v},${v},${v+5})`;
+          t.fillRect(Math.floor(r()*16), Math.floor(r()*16), 1, 1);
+        }
+        // Dark inlays
+        t.fillStyle = '#1A1A1E';
+        [[2,2],[3,2],[12,2],[13,2],[2,13],[3,13],[12,13],[13,13],[7,7],[8,8]].forEach(([x,y]) => {
+          t.fillRect(x, y, 2, 2);
+        });
+      }));
+
+      // Glow colors for each block type
+      const blockGlows = [
+        'rgba(80,160,50,0.5)',    // grass
+        'rgba(74,237,217,0.5)',   // diamond
+        'rgba(255,215,0,0.45)',   // gold
+        'rgba(255,30,30,0.45)',   // redstone
+        'rgba(80,200,120,0.5)',   // emerald
+        'rgba(30,86,214,0.45)',   // lapis
+        'rgba(184,134,11,0.4)',   // ancient debris
+        'rgba(218,165,32,0.45)',  // enchanting table
+        'rgba(120,120,130,0.35)', // netherite
+      ];
+
+      // ---- Floating block particles (reduced for perf) ----
+      const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const PARTICLE_COUNT = isMobile ? 8 : 14;
+      const particles = [];
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const texIdx = Math.floor(Math.random() * blockTextures.length);
+        particles.push({
+          x: Math.random() * 2000,
+          y: Math.random() * 4000,
+          size: 16 + Math.random() * 20,  // 16-36px — visible MC blocks
+          vx: (Math.random() - 0.5) * 0.25,
+          vy: -0.15 - Math.random() * 0.4,
+          rotation: Math.random() * Math.PI,
+          rotSpeed: (Math.random() - 0.5) * 0.008,
+          tex: blockTextures[texIdx],
+          glow: blockGlows[texIdx],
+          alpha: 0.25 + Math.random() * 0.45
+        });
+      }
+
+      // ---- Main render ----
+      let pageVisible = true;
+      document.addEventListener('visibilitychange', () => { pageVisible = !document.hidden; });
+
+      function render() {
+        if (!pageVisible) { requestAnimationFrame(render); return; }
+        time += 0.016;
+        ctx.clearRect(0, 0, W, H);
+
+        // Sky gradient (Minecraft night sky)
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+        skyGrad.addColorStop(0, '#050510');     // deep space
+        skyGrad.addColorStop(0.15, '#0a0a2e');  // dark blue
+        skyGrad.addColorStop(0.35, '#0d1533');  // midnight
+        skyGrad.addColorStop(0.55, '#121a3a');  // pre-dawn
+        skyGrad.addColorStop(0.7, '#1a2545');   // horizon blue
+        skyGrad.addColorStop(0.85, '#152030');  // dark horizon
+        skyGrad.addColorStop(1, '#0a1020');     // ground
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Aurora / atmospheric glow
+        const auroraGrad = ctx.createRadialGradient(W * 0.3, H * 0.25, 0, W * 0.3, H * 0.25, W * 0.5);
+        auroraGrad.addColorStop(0, 'rgba(85,255,100,0.04)');
+        auroraGrad.addColorStop(0.5, 'rgba(0,200,130,0.02)');
+        auroraGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = auroraGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        const auroraGrad2 = ctx.createRadialGradient(W * 0.7, H * 0.18, 0, W * 0.7, H * 0.18, W * 0.4);
+        auroraGrad2.addColorStop(0, 'rgba(100,150,255,0.03)');
+        auroraGrad2.addColorStop(1, 'transparent');
+        ctx.fillStyle = auroraGrad2;
+        ctx.fillRect(0, 0, W, H);
+
+        // Stars
+        const sParallax = scrollY * 0.02;
+        stars.forEach(s => {
+          const twinkle = 0.3 + 0.7 * Math.abs(Math.sin(time * s.speed + s.twinkle));
+          ctx.globalAlpha = twinkle * 0.8;
+          ctx.fillStyle = s.color;
+          ctx.fillRect(
+            ((s.x + time * 2) % (W + 200)) - 100,
+            s.y - sParallax,
+            s.size, s.size
+          );
+        });
+        ctx.globalAlpha = 1;
+
+        // Moon (pixel style)
+        const moonX = W * 0.78;
+        const moonY = 80 - sParallax * 0.5;
+        ctx.fillStyle = 'rgba(255,255,230,0.9)';
+        for (let my = 0; my < 8; my++) {
+          for (let mx = 0; mx < 8; mx++) {
+            const dist = Math.sqrt((mx - 3.5) ** 2 + (my - 3.5) ** 2);
+            if (dist <= 3.5) {
+              ctx.fillRect(moonX + mx * 6, moonY + my * 6, 6, 6);
+            }
+          }
+        }
+        // Moon glow
+        const moonGlow = ctx.createRadialGradient(moonX + 24, moonY + 24, 10, moonX + 24, moonY + 24, 120);
+        moonGlow.addColorStop(0, 'rgba(255,255,230,0.08)');
+        moonGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = moonGlow;
+        ctx.fillRect(moonX - 100, moonY - 100, 250, 250);
+
+        // Floating MC block particles
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rotation += p.rotSpeed;
+
+          // Wrap around
+          if (p.y < -60) p.y = 4000;
+          if (p.x < -60) p.x = W + 60;
+          if (p.x > W + 60) p.x = -60;
+
+          const screenY = p.y - scrollY * 0.3;
+          if (screenY > -60 && screenY < H + 60) {
+            ctx.save();
+            ctx.translate(p.x, screenY);
+            ctx.rotate(p.rotation);
+
+            // Glow behind block
+            ctx.shadowColor = p.glow;
+            ctx.shadowBlur = 25;
+
+            // Draw MC block texture (pixelated)
+            ctx.globalAlpha = p.alpha;
+            ctx.imageSmoothingEnabled = false;
+            const hs = p.size / 2;
+            ctx.drawImage(p.tex, -hs, -hs, p.size, p.size);
+
+            // Block edge highlight (top + left)
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-hs, -hs, p.size, p.size);
+
+            ctx.restore();
+          }
+        });
+
+        // Bottom vignette
+        const vignette = ctx.createLinearGradient(0, H * 0.7, 0, H);
+        vignette.addColorStop(0, 'transparent');
+        vignette.addColorStop(1, 'rgba(5,5,16,0.8)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, H * 0.7, W, H * 0.3);
+
+        requestAnimationFrame(render);
+      }
+      render();
+    })();
+
+    // ============================================================
+    //  Liquid Glass — Pure CSS (no SVG displacement filter)
+    //  All glass effects via GPU-accelerated backdrop-filter
+    // ============================================================
+    // No JS needed — CSS handles everything instantly on paint
+
+    // ============================================================
+    //  Custom Cursor
+    // ============================================================
+    const cursor = document.getElementById('cursor');
+    const cursorDot = document.getElementById('cursor-dot');
+    const mouseGlow = document.getElementById('mouse-glow');
+    let mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0, dotX = 0, dotY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      mouseGlow.style.left = mouseX + 'px';
+      mouseGlow.style.top = mouseY + 'px';
+    });
+
+    function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.15;
+      cursorY += (mouseY - cursorY) * 0.15;
+      cursor.style.left = cursorX + 'px';
+      cursor.style.top = cursorY + 'px';
+      dotX += (mouseX - dotX) * 0.3;
+      dotY += (mouseY - dotY) * 0.3;
+      cursorDot.style.left = dotX + 'px';
+      cursorDot.style.top = dotY + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    document.querySelectorAll('a, .btn, .srv-addr, .nav-links a, .nav-cta, .nav-brand, .mobile-btn').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('cursor-hover'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('cursor-hover'));
+    });
+
+    // ============================================================
+    //  Hero Parallax (desktop only)
+    // ============================================================
+    if (!('ontouchstart' in window) && !navigator.maxTouchPoints) {
+      const heroContent = document.getElementById('hero-content');
+      document.addEventListener('mousemove', (e) => {
+        const px = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+        const py = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
+        if (heroContent) heroContent.style.transform = `translate(${px * -5}px, ${py * -5}px)`;
+      });
+    }
+
+    // ============================================================
+    //  3D Card Tilt (desktop only, rAF-throttled)
+    // ============================================================
+    if (!('ontouchstart' in window) && !navigator.maxTouchPoints) {
+      document.querySelectorAll('.glass-card').forEach(card => {
+        let tiltPending = false;
+        card.addEventListener('mousemove', (e) => {
+          if (tiltPending) return;
+          tiltPending = true;
+          requestAnimationFrame(() => {
+            const r = card.getBoundingClientRect();
+            const rx = (e.clientY - r.top - r.height / 2) / 12;
+            const ry = (e.clientX - r.left - r.width / 2) / 12;
+            card.style.transform = `perspective(1000px) rotateX(${-rx}deg) rotateY(${ry}deg) translateZ(8px)`;
+            tiltPending = false;
+          });
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
+        });
+      });
+    }
+
+    // ============================================================
+    //  Scroll nav
+    // ============================================================
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 60);
+    }, { passive: true });
+
+    document.getElementById('mobile-btn').addEventListener('click', () => {
+      document.getElementById('nav-links').classList.toggle('open');
+    });
+
+    // ============================================================
+    //  Intersection Reveal
+    // ============================================================
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('vis'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) {
+          t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          document.getElementById('nav-links').classList.remove('open');
+        }
+      });
+    });
+
+    // Copy address
+    document.querySelectorAll('.srv-addr').forEach(el => {
+      el.addEventListener('click', function() {
+        const text = this.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          this.textContent = '✓ 已复制';
+          setTimeout(() => { this.textContent = text; }, 1200);
+        });
+      });
+    });
+
+    // ============================================================
+    //  Server Status (mcsrvstat.us API)
+    // ============================================================
+    (function() {
+      const servers = [
+        { id: 'survival', host: '110.42.33.89', port: '' },
+        { id: 'bedwars',  host: '110.42.33.89', port: '25566' }
+      ];
+
+      function updateStatus(id, data) {
+        const dot = document.getElementById('dot-' + id);
+        const players = document.getElementById('players-' + id);
+        const ver = document.getElementById('ver-' + id);
+
+        dot.classList.remove('loading');
+
+        if (data.online) {
+          dot.classList.add('online');
+          dot.classList.remove('offline');
+          const online = data.players ? data.players.online : 0;
+          const max = data.players ? data.players.max : '?';
+          players.textContent = online + ' / ' + max + ' 在线';
+          ver.textContent = data.version || 'Java Edition';
+        } else {
+          dot.classList.add('offline');
+          dot.classList.remove('online');
+          players.textContent = '离线';
+          ver.textContent = '服务器未响应';
+        }
+      }
+
+      servers.forEach(srv => {
+        const query = srv.port ? srv.host + ':' + srv.port : srv.host;
+        fetch('https://api.mcsrvstat.us/2/' + query)
+          .then(r => r.json())
+          .then(data => updateStatus(srv.id, data))
+          .catch(() => {
+            const dot = document.getElementById('dot-' + srv.id);
+            dot.classList.remove('loading');
+            dot.classList.add('offline');
+            document.getElementById('players-' + srv.id).textContent = '检测失败';
+            document.getElementById('ver-' + srv.id).textContent = '网络异常';
+          });
+      });
+
+      // Auto-refresh every 60s
+      setInterval(() => {
+        servers.forEach(srv => {
+          const query = srv.port ? srv.host + ':' + srv.port : srv.host;
+          fetch('https://api.mcsrvstat.us/2/' + query)
+            .then(r => r.json())
+            .then(data => updateStatus(srv.id, data))
+            .catch(() => {});
+        });
+      }, 60000);
+    })();
+
+    // Staggered reveal
+    const gridIo = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.glass-card, .rule-card').forEach((c, i) => {
+            c.style.opacity = '0';
+            c.style.transform = 'translateY(20px)';
+            c.style.transition = `opacity 0.5s ${0.08 * i}s var(--ease), transform 0.5s ${0.08 * i}s var(--ease)`;
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              c.style.opacity = '1';
+              c.style.transform = 'translateY(0)';
+            }));
+          });
+          gridIo.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.servers-grid, .feat-grid, .rules-list').forEach(el => gridIo.observe(el));
+  </script>
+</body>
+</html>
